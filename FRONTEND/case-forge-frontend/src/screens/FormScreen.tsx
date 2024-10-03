@@ -65,16 +65,16 @@ const FormScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="h-full w-screen bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex items-center justify-center m-0 p-0">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-4xl mx-auto"
+        className="w-full max-w-4xl"
       >
         <div className="text-center mb-12">
           <motion.h1 
-            className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 mb-4"
+            className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 m-0"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -82,7 +82,7 @@ const FormScreen = () => {
             FormScreen
           </motion.h1>
           <motion.p 
-            className="text-xl text-gray-400"
+            className="text-lg sm:text-xl text-gray-400"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
@@ -91,8 +91,8 @@ const FormScreen = () => {
           </motion.p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex justify-center space-x-4 mb-8">
+        <form onSubmit={handleSubmit} className="space-y-6 m-2">
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
             {['professional', 'skills', 'parameters'].map((section) => (
               <motion.button
                 key={section}

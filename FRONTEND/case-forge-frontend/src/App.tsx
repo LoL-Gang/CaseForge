@@ -9,7 +9,10 @@ function App() {
 
   return (
     <>
-     <FormScreen /> 
+    <div className='h-screen w-screen'>
+    <FormScreen /> 
+    </div>
+     
     </>
   )
 }
