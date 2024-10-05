@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { BookOpen, Briefcase, Clock, GraduationCap, Zap, Loader2, Sparkles } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+import ChatTile from '@/components/ChatTile';
 
 const FormScreen = () => {
   const [formData, setFormData] = useState({
@@ -28,7 +29,11 @@ const FormScreen = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeSection, setActiveSection] = useState('professional');
 
-  const handleInputChange = (e) => {
+  const professionalRef = useRef(null);
+  const skillsRef = useRef(null);
+  const parametersRef = useRef(null);
+
+  const handleInputChange = (e: { target: { name: any; value: any; }; }) => {
     const { name, value } = e.target;
     setFormData(prevState => ({
       ...prevState,
@@ -36,21 +41,21 @@ const FormScreen = () => {
     }));
   };
 
-  const handleSelectChange = (name, value) => {
+  const handleSelectChange = (name:string, value: string) => {
     setFormData(prevState => ({
       ...prevState,
       [name]: value
     }));
   };
 
-  const handleSliderChange = (value) => {
+  const handleSliderChange = (value: any[]) => {
     setFormData(prevState => ({
       ...prevState,
       timeConstraint: value[0]
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setIsGenerating(true);
     setTimeout(() => {
@@ -59,22 +64,51 @@ const FormScreen = () => {
     }, 3000);
   };
 
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
+  const scrollToSection = (section:string) => {
+    setActiveSection(section);
+    const sectionRef = {
+      professional: professionalRef,
+      skills: skillsRef,
+      parameters: parametersRef
+    }[section];
+
+    if (sectionRef && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    [professionalRef, skillsRef, parametersRef].forEach((ref) => {
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="h-full w-screen bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex items-center justify-center m-0 p-0">
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 flex items-center justify-center m-0 p-0 overflow-x-hidden">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-4xl"
+        className="w-full max-w-4xl py-12 px-4 sm:px-6 lg:px-8"
       >
         <div className="text-center mb-12">
           <motion.h1 
-            className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 m-0"
+            className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 mb-4"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -91,185 +125,161 @@ const FormScreen = () => {
           </motion.p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 m-2">
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
+        <div className="sticky top-0 z-10 bg-gray-900 py-4 mb-8">
+          <div className="flex flex-wrap justify-center gap-4">
             {['professional', 'skills', 'parameters'].map((section) => (
               <motion.button
                 key={section}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`px-4 py-2 rounded-full ${activeSection === section ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
-                onClick={() => setActiveSection(section)}
+                onClick={() => scrollToSection(section)}
               >
                 {section.charAt(0).toUpperCase() + section.slice(1)}
               </motion.button>
             ))}
           </div>
+        </div>
 
-          <AnimatePresence mode="wait">
-            {activeSection === 'professional' && (
-              <motion.div
-                key="professional"
-                variants={sectionVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-              >
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-xl text-gray-200">
-                      <Briefcase className="mr-2 h-5 w-5" />
-                      Professional Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Input
-                      name="role"
-                      placeholder="Current Role/Position"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="experience"
-                      placeholder="Years of Experience"
-                      value={formData.experience}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="industry"
-                      placeholder="Industry/Domain"
-                      value={formData.industry}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="companies"
-                      placeholder="Specific Companies of Interest"
-                      value={formData.companies}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+        <form onSubmit={handleSubmit} className="space-y-12">
+          <div id="professional" ref={professionalRef}>
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center text-xl text-gray-200">
+                  <Briefcase className="mr-2 h-5 w-5" />
+                  Professional Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Input
+                  name="role"
+                  placeholder="Current Role/Position"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Input
+                  name="experience"
+                  placeholder="Years of Experience"
+                  value={formData.experience}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Input
+                  name="industry"
+                  placeholder="Industry/Domain"
+                  value={formData.industry}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Input
+                  name="companies"
+                  placeholder="Specific Companies of Interest"
+                  value={formData.companies}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </CardContent>
+            </Card>
+          </div>
 
-            {activeSection === 'skills' && (
-              <motion.div
-                key="skills"
-                variants={sectionVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-              >
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-xl text-gray-200">
-                      <GraduationCap className="mr-2 h-5 w-5" />
-                      Skills and Objectives
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Textarea
-                      name="skills"
-                      placeholder="Key Skills"
-                      value={formData.skills}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Textarea
-                      name="softSkills"
-                      placeholder="Soft Skills"
-                      value={formData.softSkills}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="interviewRole"
-                      placeholder="Interview Role"
-                      value={formData.interviewRole}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Textarea
-                      name="learningObjectives"
-                      placeholder="Learning Objectives"
-                      value={formData.learningObjectives}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+          <div id="skills" ref={skillsRef}>
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center text-xl text-gray-200">
+                  <GraduationCap className="mr-2 h-5 w-5" />
+                  Skills and Objectives
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  name="skills"
+                  placeholder="Key Skills"
+                  value={formData.skills}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Textarea
+                  name="softSkills"
+                  placeholder="Soft Skills"
+                  value={formData.softSkills}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Input
+                  name="interviewRole"
+                  placeholder="Interview Role"
+                  value={formData.interviewRole}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Textarea
+                  name="learningObjectives"
+                  placeholder="Learning Objectives"
+                  value={formData.learningObjectives}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </CardContent>
+            </Card>
+          </div>
 
-            {activeSection === 'parameters' && (
-              <motion.div
-                key="parameters"
-                variants={sectionVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-              >
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-xl text-gray-200">
-                      <BookOpen className="mr-2 h-5 w-5" />
-                      Case Study Parameters
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <Clock className="text-gray-400 h-5 w-5" />
-                      <div className="flex-grow">
-                        <p className="text-sm font-medium text-gray-300 mb-1">Time Constraint: {formData.timeConstraint} minutes</p>
-                        <Slider
-                          defaultValue={[60]}
-                          max={180}
-                          step={15}
-                          onValueChange={handleSliderChange}
-                          className="text-blue-500"
-                        />
-                      </div>
-                    </div>
-                    <Select onValueChange={(value) => handleSelectChange('difficulty', value)}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-200">
-                        <SelectValue placeholder="Difficulty Level" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600 text-gray-200">
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      name="format"
-                      placeholder="Preferred Format"
-                      value={formData.format}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+          <div id="parameters" ref={parametersRef}>
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center text-xl text-gray-200">
+                  <BookOpen className="mr-2 h-5 w-5" />
+                  Case Study Parameters
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <Clock className="text-gray-400 h-5 w-5" />
+                  <div className="flex-grow">
+                    <p className="text-sm font-medium text-gray-300 mb-1">Time Constraint: {formData.timeConstraint} minutes</p>
+                    <Slider
+                      defaultValue={[60]}
+                      max={180}
+                      step={15}
+                      onValueChange={handleSliderChange}
+                      className="text-blue-500"
                     />
-                    <Textarea
-                      name="constraints"
-                      placeholder="Industry-Specific Constraints"
-                      value={formData.constraints}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="metrics"
-                      placeholder="Case Study Metrics"
-                      value={formData.metrics}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  </div>
+                </div>
+                <Select onValueChange={(value) => handleSelectChange('difficulty', value)}>
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-200">
+                    <SelectValue placeholder="Difficulty Level" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600 text-gray-200">
+                    <SelectItem value="beginner">Beginner</SelectItem>
+                    <SelectItem value="intermediate">Intermediate</SelectItem>
+                    <SelectItem value="advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  name="format"
+                  placeholder="Preferred Format"
+                  value={formData.format}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Textarea
+                  name="constraints"
+                  placeholder="Industry-Specific Constraints"
+                  value={formData.constraints}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+                <Input
+                  name="metrics"
+                  placeholder="Case Study Metrics"
+                  value={formData.metrics}
+                  onChange={handleInputChange}
+                  className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </CardContent>
+            </Card>
+          </div>
 
           <motion.div
             whileHover={{ scale: 1.02 }}
@@ -295,6 +305,7 @@ const FormScreen = () => {
           </motion.div>
         </form>
       </motion.div>
+      <ChatTile name='chat' description='chat description' />
     </div>
   );
 };
