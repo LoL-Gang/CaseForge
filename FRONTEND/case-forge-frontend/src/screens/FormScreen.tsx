@@ -305,7 +305,6 @@ const FormScreen = () => {
           </motion.div>
         </form>
       </motion.div>
-      <ChatTile name='chat' description='chat description' />
     </div>
   );
 };
