@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Study Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        
+        #app {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1,
+        h2 {
+            text-align: center;
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            margin: 10px 0 5px;
+        }
+        
+        input,
+        select,
+        textarea {
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        #case-history li {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+    </style>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <h1>Personalized Case Study Generator</h1>
+
+        <div id="login-section">
+            <button id="login-btn">Login with Google</button>
+            <p id="user-info"></p>
+        </div>
+
+        <div id="input-section" style="display:none;">
+            <h2>Generate Case Study</h2>
+            <form id="case-form">
+                <label for="current-role">Current Role/Position:</label>
+                <input type="text" id="current-role" value="Product Manager" required>
+
+                <label for="experience">Years of Experience:</label>
+                <select id="experience" required>
+                    <option value="3-5 years" selected>3-5 years</option>
+                </select>
+
+                <label for="industry">Industry/Domain:</label>
+                <input type="text" id="industry" value="Fintech" required>
+
+                <label for="companies">Specific Companies of Interest:</label>
+                <input type="text" id="companies" value="Stripe, Square" required>
+
+                <label for="skills">Key Skills:</label>
+                <textarea id="skills" required>Product Strategy, Data Analysis, Stakeholder Management</textarea>
+
+                <label for="soft-skills">Soft Skills:</label>
+                <textarea id="soft-skills" required>Leadership, Communication</textarea>
+
+                <label for="interview-role">Interview Role:</label>
+                <input type="text" id="interview-role" value="Product Management Case Study" required>
+
+                <label for="objectives">Learning Objectives:</label>
+                <textarea id="objectives" required>Improving KPIs, Enhancing Product Strategy</textarea>
+
+                <label for="time-constraints">Time Constraints:</label>
+                <input type="text" id="time-constraints" value="1 hour" required>
+
+                <label for="difficulty">Difficulty Level:</label>
+                <select id="difficulty" required>
+                    <option value="Intermediate" selected>Intermediate</option>
+                </select>
+
+                <label for="format">Preferred Format:</label>
+                <input type="text" id="format" value="Written Case with Data Analysis & Strategic Proposal" required>
+
+                <label for="constraints">Industry-Specific Constraints:</label>
+                <input type="text" id="constraints" value="Compliance with financial regulations" required>
+
+                <label for="metrics">Case Study Metrics:</label>
+                <input type="text" id="metrics" value="Revenue growth, User acquisition" required>
+
+                <button type="submit">Generate Case Study</button>
+            </form>
+        </div>
+
+        <div id="result-section" style="display:none;">
+            <h2>Generated Case Study</h2>
+            <pre id="generated-case-study"></pre>
+            <h2>Questions and Answers</h2>
+            <pre id="generated-qa"></pre>
+        </div>
+
+        <div id="history-section" style="display:none;">
+            <h2>Your Generated Case Studies</h2>
+            <ul id="case-history"></ul>
+        </div>
+    </div>
+
+    <script>
+        import {
+            initializeApp
+        } from "firebase/app";
+        import {
+            getAnalytics
+        } from "firebase/analytics";
+        // Firebase configuration (replace with your config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeEiecmOFqMJg7A7QbcRapgTpNOKGM0eQ",
+            authDomain: "caseforge-1ca3e.firebaseapp.com",
+            databaseURL: "https://caseforge-1ca3e-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "caseforge-1ca3e",
+            storageBucket: "caseforge-1ca3e.appspot.com",
+            messagingSenderId: "172883792462",
+            appId: "1:172883792462:web:a6b67628a6400eab23e91f",
+            measurementId: "G-00MZY7EQMH"
+        };
+
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+        const analytics = getAnalytics(app);
+
+        // DOM Elements
+        const loginBtn = document.getElementById('login-btn');
+        const userInfo = document.getElementById('user-info');
+        const inputSection = document.getElementById('input-section');
+        const resultSection = document.getElementById('result-section');
+        const caseForm = document.getElementById('case-form');
+        const generatedCaseStudy = document.getElementById('generated-case-study');
+        const generatedQA = document.getElementById('generated-qa');
+        const historySection = document.getElementById('history-section');
+        const caseHistory = document.getElementById('case-history');
+
+        // Login with Google
+        loginBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).then(result => {
+                const user = result.user;
+                userInfo.textContent = `Logged in as ${user.displayName}`;
+                loginBtn.style.display = 'none';
+                inputSection.style.display = 'block';
+                fetchUserCaseStudies(user.uid);
+            });
+        });
+
+        // Form submission for generating case study
+        caseForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const parameters = {
+                currentRole: document.getElementById('current-role').value,
+                experience: document.getElementById('experience').value,
+                industry: document.getElementById('industry').value,
+                companies: document.getElementById('companies').value,
+                skills: document.getElementById('skills').value.split(', '),
+                softSkills: document.getElementById('soft-skills').value.split(', '),
+                interviewRole: document.getElementById('interview-role').value,
+                objectives: document.getElementById('objectives').value.split(', '),
+                timeConstraints: document.getElementById('time-constraints').value,
+                difficulty: document.getElementById('difficulty').value,
+                format: document.getElementById('format').value,
+                constraints: document.getElementById('constraints').value,
+                metrics: document.getElementById('metrics').value
+            };
+
+            auth.currentUser.getIdToken().then(token => {
+                axios.post('/generate-case-study', {
+                        parameters: parameters
+                    }, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    })
+                    .then(response => {
+                        const data = response.data;
+                        generatedCaseStudy.textContent = data.case_study;
+                        generatedQA.textContent = JSON.stringify(data.questions_and_answers, null, 2);
+                        resultSection.style.display = 'block';
+                        fetchUserCaseStudies(auth.currentUser.uid);
+                    })
+                    .catch(error => {
+                        console.error("Error generating case study:", error);
+                    });
+            });
+        });
+
+        // Fetch user case study history
+        function fetchUserCaseStudies(userId) {
+            db.ref(`users/${userId}/caseStudies`).once('value', (snapshot) => {
+                const caseStudies = snapshot.val();
+                if (caseStudies) {
+                    historySection.style.display = 'block';
+                    caseHistory.innerHTML = '';
+                    Object.keys(caseStudies).forEach(id => {
+                        const caseStudy = caseStudies[id];
+                        const li = document.createElement('li');
+                        li.textContent = caseStudy.case_study;
+                        caseHistory.appendChild(li);
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
