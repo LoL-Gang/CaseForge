@@ -1,0 +1,17 @@
+# .gitignore
+
+# Environment Variables
+.env
+
+# Firebase Service Account
+firebase-config/serviceAccountKey.json
+
+# ChromaDB Persistence Directory
+chroma_db/
+
+# Python Bytecode
+__pycache__/
+*.pyc
+
+# Logs
+*.log

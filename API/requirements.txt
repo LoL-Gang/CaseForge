@@ -1,0 +1,9 @@
+Flask
+flask-cors
+firebase-admin
+requests
+spacy
+chromadb
+numpy
+python-dotenv
+PyMuPDF
