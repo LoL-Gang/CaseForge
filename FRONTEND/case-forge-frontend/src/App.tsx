@@ -74,8 +74,9 @@ function App() {
   return (
     <>
     <div className='h-screen w-screen'>
-    <ArchiveScreen items={sampleChatTiles} /> 
     <FormScreen/>
+    <ArchiveScreen items={sampleChatTiles} /> 
+    
     </div>
      
     </>

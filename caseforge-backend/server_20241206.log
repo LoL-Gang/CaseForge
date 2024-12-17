@@ -1,0 +1,14 @@
+2024-12-06 20:44:18,392 - INFO - Starting server initialization...
+2024-12-06 20:44:18,393 - INFO - Environment variables loaded successfully
+2024-12-06 20:44:18,393 - INFO - Initializing Firebase...
+2024-12-06 20:44:18,422 - INFO - Firebase initialized successfully
+2024-12-06 20:44:18,422 - INFO - Loading spaCy model...
+2024-12-06 20:44:19,415 - INFO - spaCy model loaded successfully
+2024-12-06 20:44:19,415 - INFO - Initializing ChromaDB...
+2024-12-06 20:44:19,427 - INFO - Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+2024-12-06 20:44:19,574 - INFO - Retrieved existing ChromaDB collection
+2024-12-06 20:44:19,575 - INFO - ChromaDB initialized successfully
+2024-12-06 20:44:20,242 - INFO - Backing off send_request(...) for 0.8s (requests.exceptions.SSLError: HTTPSConnectionPool(host='us.i.posthog.com', port=443): Max retries exceeded with url: /batch/ (Caused by SSLError(SSLCertVerificationError(1, "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'us.i.posthog.com'. (_ssl.c:1000)"))))
+2024-12-06 20:44:21,060 - INFO - Backing off send_request(...) for 1.5s (requests.exceptions.SSLError: HTTPSConnectionPool(host='us.i.posthog.com', port=443): Max retries exceeded with url: /batch/ (Caused by SSLError(SSLCertVerificationError(1, "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'us.i.posthog.com'. (_ssl.c:1000)"))))
+2024-12-06 20:44:22,618 - INFO - Backing off send_request(...) for 3.1s (requests.exceptions.SSLError: HTTPSConnectionPool(host='us.i.posthog.com', port=443): Max retries exceeded with url: /batch/ (Caused by SSLError(SSLCertVerificationError(1, "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'us.i.posthog.com'. (_ssl.c:1000)"))))
+2024-12-06 20:44:25,737 - ERROR - Giving up send_request(...) after 4 tries (requests.exceptions.SSLError: HTTPSConnectionPool(host='us.i.posthog.com', port=443): Max retries exceeded with url: /batch/ (Caused by SSLError(SSLCertVerificationError(1, "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: Hostname mismatch, certificate is not valid for 'us.i.posthog.com'. (_ssl.c:1000)"))))
