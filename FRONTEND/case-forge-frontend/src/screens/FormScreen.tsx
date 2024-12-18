@@ -79,7 +79,7 @@ const FormScreen = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            FormScreen
+            CaseForge
           </motion.h1>
           <motion.p 
             className="text-xl text-gray-400"
