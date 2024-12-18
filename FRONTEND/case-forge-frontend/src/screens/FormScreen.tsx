@@ -1,56 +1,81 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { BookOpen, Briefcase, Clock, GraduationCap, Zap, Loader2, Sparkles } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import Select from 'react-select';
+import { motion } from 'framer-motion';
+import { Loader2, Sparkles } from 'lucide-react';
 
 const FormScreen = () => {
   const [formData, setFormData] = useState({
-    role: '',
-    experience: '',
-    industry: '',
-    companies: '',
-    skills: '',
-    softSkills: '',
     interviewRole: '',
-    learningObjectives: '',
-    timeConstraint: 60,
-    difficulty: 'intermediate',
-    format: '',
-    constraints: '',
-    metrics: ''
+    industry: '',
+    customInterviewRole: '', // For custom input of interview role
+    customIndustry: '', // For custom input of industry
+    difficulty: 'Medium', // Default as per the document
+    timeConstraint: 'No Time Limit', // Default as per the document
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeSection, setActiveSection] = useState('professional');
 
-  const handleInputChange = (e: { target: { name: any; value: any; }; }) => {
-    const { name, value } = e.target;
+  const roleOptions = [
+    { value: 'Product Manager', label: 'Product Manager' },
+    { value: 'Project Manager', label: 'Project Manager' },
+    { value: 'Strategy Consultant', label: 'Strategy Consultant' },
+    { value: 'Business Analyst', label: 'Business Analyst' },
+    { value: 'Operations Manager', label: 'Operations Manager' },
+    { value: 'Growth Manager', label: 'Growth Manager' },
+    { value: 'Marketing Manager', label: 'Marketing Manager' },
+    { value: 'Data Analyst', label: 'Data Analyst' },
+    { value: 'Product Designer', label: 'Product Designer' },
+    { value: 'General Management', label: 'General Management' },
+    { value: 'Other', label: 'Other' }, // User can enter a custom role
+  ];
+
+  const industryOptions = [
+    { value: 'E-commerce', label: 'E-commerce' },
+    { value: 'Retail & FMCG', label: 'Retail & FMCG' },
+    { value: 'FinTech', label: 'FinTech' },
+    { value: 'EdTech', label: 'EdTech' },
+    { value: 'Food Delivery', label: 'Food Delivery' },
+    { value: 'Consulting', label: 'Consulting' },
+    { value: 'IT Services', label: 'IT Services' },
+    { value: 'Manufacturing', label: 'Manufacturing' },
+    { value: 'Logistics & Supply Chain', label: 'Logistics & Supply Chain' },
+    { value: 'Media & Entertainment', label: 'Media & Entertainment' },
+    { value: 'Hospitality', label: 'Hospitality' },
+    { value: 'Healthcare', label: 'Healthcare' },
+    { value: 'Government & Public Sector', label: 'Government & Public Sector' },
+    { value: 'Telecommunications', label: 'Telecommunications' },
+    { value: 'Energy', label: 'Energy' },
+    { value: 'Other', label: 'Other' }, // User can enter a custom industry
+  ];
+
+  const handleInputChange = (name: keyof FormData, value: string) => {
     setFormData(prevState => ({
       ...prevState,
       [name]: value
     }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
+  interface FormData {
+    interviewRole: string;
+    industry: string;
+    customInterviewRole: string;
+    customIndustry: string;
+    difficulty: string;
+    timeConstraint: string;
+  }
+
+  interface Option {
+    value: string;
+    label: string;
+  }
+
+  const handleCustomInput = (option: string, value: string) => {
+    // If "Other" is selected, set the custom field
+    const key = `custom${option.charAt(0).toUpperCase() + option.slice(1)}`; // Custom key for state
+    handleInputChange(key as keyof FormData, value);
   };
 
-  const handleSliderChange = (value: any[]) => {
-    setFormData(prevState => ({
-      ...prevState,
-      timeConstraint: value[0]
-    }));
-  };
-
-  const handleSubmit = (e: { preventDefault: () => void; }) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsGenerating(true);
     setTimeout(() => {
@@ -59,21 +84,16 @@ const FormScreen = () => {
     }, 3000);
   };
 
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-gray-200 py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="max-w-4xl mx-auto"
       >
         <div className="text-center mb-12">
-          <motion.h1 
+          <motion.h1
             className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 mb-4"
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -81,7 +101,7 @@ const FormScreen = () => {
           >
             CaseForge
           </motion.h1>
-          <motion.p 
+          <motion.p
             className="text-xl text-gray-400"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -92,207 +112,98 @@ const FormScreen = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex justify-center space-x-4 mb-8">
-            {['professional', 'skills', 'parameters'].map((section) => (
-              <motion.button
-                key={section}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-full ${activeSection === section ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
-                onClick={() => setActiveSection(section)}
+          <Select
+            options={roleOptions}
+            className="text-black"
+            placeholder="Select Interview Role"
+            onChange={(option) => {
+              if (option) {
+                handleInputChange('interviewRole', option.value);
+                if (option.value === 'Other') {
+                  handleCustomInput('interviewRole', ''); // Reset custom role when 'Other' is selected
+                }
+              }
+            }}
+          />
+          {formData.interviewRole === 'Other' && (
+            <input
+              type="text"
+              value={formData.customInterviewRole}
+              onChange={(e) => handleCustomInput('interviewRole', e.target.value)}
+              placeholder="Enter your custom role"
+              className="text-black p-2 rounded border"
+            />
+          )}
+
+          <Select
+            options={industryOptions}
+            className="text-black"
+            placeholder="Select Industry"
+            onChange={(option) => {
+              if (option) {
+                handleInputChange('industry', option.value);
+                if (option.value === 'Other') {
+                  handleCustomInput('industry', ''); // Reset custom industry when 'Other' is selected
+                }
+              }
+            }}
+               
+          />
+          {formData.industry === 'Other' && (
+            <input
+              type="text"
+              value={formData.customIndustry}
+              onChange={(e) => handleCustomInput('industry', e.target.value)}
+              placeholder="Enter your custom industry"
+              className="text-black p-2 rounded border"
+            />
+          )}
+
+          <div className="flex flex-col gap-2">
+            <label>
+              Difficulty Level:
+              <select
+                value={formData.difficulty}
+                onChange={(e) => handleInputChange('difficulty', e.target.value)}
+                className="ml-2"
               >
-                {section.charAt(0).toUpperCase() + section.slice(1)}
-              </motion.button>
-            ))}
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </label>
+            <label>
+              Time Constraint:
+              <select
+                value={formData.timeConstraint}
+                onChange={(e) => handleInputChange('timeConstraint', e.target.value)}
+                className="ml-2"
+              >
+                <option value="No Time Limit">No Time Limit</option>
+                <option value="15 minutes">15 minutes</option>
+                <option value="30 minutes">30 minutes</option>
+                <option value="60 minutes">60 minutes</option>
+                <option value="Custom">Custom</option>
+              </select>
+            </label>
           </div>
-
-          <AnimatePresence mode="wait">
-            {activeSection === 'professional' && (
-              <motion.div
-                key="professional"
-                variants={sectionVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-              >
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-xl text-gray-200">
-                      <Briefcase className="mr-2 h-5 w-5" />
-                      Professional Details
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Input
-                      name="role"
-                      placeholder="Current Role/Position"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="experience"
-                      placeholder="Years of Experience"
-                      value={formData.experience}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="industry"
-                      placeholder="Industry/Domain"
-                      value={formData.industry}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="companies"
-                      placeholder="Specific Companies of Interest"
-                      value={formData.companies}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {activeSection === 'skills' && (
-              <motion.div
-                key="skills"
-                variants={sectionVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-              >
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-xl text-gray-200">
-                      <GraduationCap className="mr-2 h-5 w-5" />
-                      Skills and Objectives
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Textarea
-                      name="skills"
-                      placeholder="Key Skills"
-                      value={formData.skills}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Textarea
-                      name="softSkills"
-                      placeholder="Soft Skills"
-                      value={formData.softSkills}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="interviewRole"
-                      placeholder="Interview Role"
-                      value={formData.interviewRole}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Textarea
-                      name="learningObjectives"
-                      placeholder="Learning Objectives"
-                      value={formData.learningObjectives}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
-            {activeSection === 'parameters' && (
-              <motion.div
-                key="parameters"
-                variants={sectionVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-              >
-                <Card className="bg-gray-800 border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-xl text-gray-200">
-                      <BookOpen className="mr-2 h-5 w-5" />
-                      Case Study Parameters
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <Clock className="text-gray-400 h-5 w-5" />
-                      <div className="flex-grow">
-                        <p className="text-sm font-medium text-gray-300 mb-1">Time Constraint: {formData.timeConstraint} minutes</p>
-                        <Slider
-                          defaultValue={[60]}
-                          max={180}
-                          step={15}
-                          onValueChange={handleSliderChange}
-                          className="text-blue-500"
-                        />
-                      </div>
-                    </div>
-                    <Select onValueChange={(value) => handleSelectChange('difficulty', value)}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-gray-200">
-                        <SelectValue placeholder="Difficulty Level" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600 text-gray-200">
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      name="format"
-                      placeholder="Preferred Format"
-                      value={formData.format}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Textarea
-                      name="constraints"
-                      placeholder="Industry-Specific Constraints"
-                      value={formData.constraints}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                    <Input
-                      name="metrics"
-                      placeholder="Case Study Metrics"
-                      value={formData.metrics}
-                      onChange={handleInputChange}
-                      className="bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+            disabled={isGenerating}
           >
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-              disabled={isGenerating}
-            >
-              {isGenerating ? (
-                <span className="flex items-center justify-center">
-                  <Loader2 className="animate-spin mr-2 h-5 w-5" />
-                  Forging Your Case Study...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center">
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Forge Case Study
-                </span>
-              )}
-            </Button>
-          </motion.div>
+            {isGenerating ? (
+              <span className="flex items-center justify-center">
+                <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                Generating Your Case Study...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center">
+                <Sparkles className="mr-2 h-5 w-5" />
+                Generate My Case
+              </span>
+            )}
+          </button>
         </form>
       </motion.div>
     </div>
