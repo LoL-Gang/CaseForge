@@ -1,5 +1,3 @@
-# app.py
-
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from firebase import initialize_firebase
@@ -15,6 +13,8 @@ from gemini_api import generate_case_study, generate_qa
 from utils import setup_logging, extract_qa_pairs
 import os
 import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 # Setup logging
@@ -32,6 +32,13 @@ initialize_firebase(firebase_db_url)
 
 # Initialize ChromaDB and spaCy model
 initialize_chromadb()
+
+def run_async(func, *args, **kwargs):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(func(*args, **kwargs))
+    loop.close()
+    return result
 
 @app.route('/')
 def index():
@@ -91,89 +98,17 @@ def generate():
             logger.error(f"Invalid difficulty level: {parameters['difficulty']}")
             return jsonify({"error": f"Invalid difficulty level. Allowed values: {allowed_difficulties}"}), 400
 
-        # Check or create the data directory
-        data_dir = "./Data"
-        if not os.path.exists(data_dir):
-            os.makedirs(data_dir)
-            logger.info(f"Created Data directory at {data_dir}")
+        # Execute the async functions in a thread pool
+        with ThreadPoolExecutor() as executor:
+            future_case_study = executor.submit(run_async, generate_case_study, "some reference case study text", parameters)
+            generated_case_study = future_case_study.result()  # This will wait for the async function to complete
 
-        # Initialize case study files and parse PDFs
-        case_study_files = ["./Data/case_study1.pdf"]  # You can add more files here
-        case_studies = []
+            if not generated_case_study:
+                logger.error("Failed to generate case study")
+                return jsonify({"error": "Failed to generate case study"}), 500
 
-        for i, file_path in enumerate(case_study_files):
-            logger.info(f"Processing file {i+1}/{len(case_study_files)}: {file_path}")
-
-            if not os.path.exists(file_path):
-                logger.error(f"Case study file not found at {file_path}")
-                return jsonify({"error": f"Case study file not found: {file_path}"}), 404
-
-            text = parse_pdf(file_path)
-            if not text:
-                logger.error("No text extracted from PDF")
-                return jsonify({"error": "Failed to extract text from PDF"}), 500
-
-            case_studies.append({"id": i, "text": text})
-            logger.info(f"Successfully processed file {i+1}")
-
-        # Store vectors and find a similar case study
-        logger.info("Storing vectors in ChromaDB...")
-        store_vectors_in_chromadb(case_studies)
-
-        logger.info("Finding similar case study...")
-        query_vector = vectorize_text("Generate a product management case study")
-        similar_case_study = find_similar_case_study(query_vector)
-
-        if not similar_case_study:
-            logger.error("No similar case study found")
-            return jsonify({"error": "Failed to find similar case study"}), 500
-
-        # Generate new case study
-        logger.info("Generating new case study...")
-        try:
-            generated_case_study = generate_case_study(similar_case_study, parameters)
-        except Exception as e:
-            logger.error(f"Error generating case study: {str(e)}")
-            return jsonify({
-                "case_study": "Error generating case study",
-                "error": str(e),
-                "questions_and_answers": [
-                    {
-                        "question": "Error occurred",
-                        "answer": f"An error occurred while generating the content: {str(e)}"
-                    }
-                ]
-            }), 500
-
-        if not generated_case_study:
-            logger.error("Failed to generate case study")
-            return jsonify({"error": "Failed to generate case study"}), 500
-
-        # Log the generated case study for debugging
-        logger.info(f"Generated case study length: {len(generated_case_study)}")
-        logger.info("Case study preview: " + generated_case_study[:200] + "...")
-
-        # Generate Q&A based on the generated case study
-        logger.info("Generating Q&A...")
-        try:
-            qa = generate_qa(generated_case_study, parameters)
-        except Exception as e:
-            logger.error(f"Error generating Q&A: {str(e)}")
-            return jsonify({
-                "case_study": generated_case_study,
-                "questions_and_answers": [
-                    {
-                        "question": "Error occurred",
-                        "answer": f"An error occurred while generating the Q&A: {str(e)}"
-                    }
-                ],
-                "metadata": {
-                    "generated_at": datetime.now().isoformat(),
-                    "parameters": parameters,
-                    "case_study_length": len(generated_case_study),
-                    "num_qa_pairs": 0
-                }
-            }), 500
+            future_qa = executor.submit(run_async, generate_qa, generated_case_study, parameters)
+            qa = future_qa.result()  # This will wait for the async function to complete
 
         logger.info(f"Q&A generation completed. Generated {len(qa)} pairs")
 
