@@ -17,56 +17,42 @@ async def generate_case_study(similar_case_study: str, parameters: dict) -> str:
         "x-goog-api-key": api_key
     }
     prompt = f"""
-    Create a detailed product management case study following these requirements:
-    
-    Context:
-    - Industry: {parameters.get('industry', 'Technology')}
-    - Role Focus: {parameters.get('role', 'Product Manager')}
-    - Difficulty Level: {parameters.get('difficulty', 'Medium')}
-    - Focus Area: {parameters.get('focus_area', 'Product Strategy')}
-    
-    Case Study Structure:
+    Create a detailed case study based on the following specifications:
+
+    Industry: {parameters.get('industry', 'Technology')}
+    Role: {parameters.get('role', 'Product Manager')}
+    Difficulty: {parameters.get('difficulty', 'Medium')}
+    Estimated Completion Time: {parameters.get('time_constraint', 'No Time Limit')}
+    Focus Area: Product Strategy
+
+    Requirements:
     1. Background & Context
-       - Company description
-       - Market situation
-       - Current challenges
+       - Detailed company description
+       - Current market dynamics
+       - Identification of key challenges
     
     2. Problem Statement
-       - Clear definition of the main problem
-       - Key stakeholders involved
-       - Business impact
+       - Clear articulation of the main problem
+       - Stakeholders involved
+       - Expected business impact
     
     3. Data & Constraints
-       - Available data and metrics
-       - Technical limitations
-       - Budget/resource constraints
-       - Timeline considerations
+       - Data availability and key metrics
+       - Technical constraints
+       - Budget and resource limitations
+       - Timeline implications
     
-    4. Requirements
-       - Business requirements
-       - User needs
-       - Technical requirements
+    4. Proposed Solution
+       - Various strategies and approaches
+       - Evaluation of trade-offs
+       - Key success metrics
     
-    5. Solution Space
-       - Potential approaches
-       - Trade-offs analysis
-       - Success metrics
+    5. Implementation Plan
+       - Proposed timeline
+       - Resources allocation
+       - Risk management strategies
     
-    6. Implementation Considerations
-       - Timeline
-       - Resource allocation
-       - Risk mitigation
-    
-    Reference case study for style (but create entirely new content):
-    {similar_case_study}
-    
-    Important:
-    - Make it detailed and realistic
-    - Include specific numbers and metrics
-    - Present clear trade-offs and decision points
-    - Focus on {parameters.get('focus_area')} aspects
-    - Match the {parameters.get('difficulty')} difficulty level
-    - Make it relevant to {parameters.get('industry')} industry
+    Note: Ensure the case study is realistic, includes specific metrics and data, matches the difficulty level of {parameters.get('difficulty')}, and can be realistically approached within {parameters.get('time_constraint')}.
     """
 
     payload = {
@@ -86,7 +72,6 @@ async def generate_case_study(similar_case_study: str, parameters: dict) -> str:
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(url, headers=headers, json=payload, timeout=ClientTimeout(total=30)) as response:
-                print("req sent")
                 logger.info(f"Gemini API response status: {response.status}")
                 if response.status == 200:
                     content = await response.json()
@@ -110,26 +95,21 @@ async def generate_qa(case_study: str, parameters: dict) -> list:
         "x-goog-api-key": api_key
     }
     prompt = f"""
-    Based on this case study, generate 5 challenging and thought-provoking questions with detailed answers.
-    Focus on critical thinking and decision-making aspects.
+    Based on this case study, generate 5 insightful questions with detailed answers, focusing on strategic and operational challenges.
 
-    Case Study:
+    Case Study Text:
     {case_study}
 
-    Generate questions that:
-    - Match the {parameters.get('difficulty', 'Medium')} difficulty level
-    - Focus on {parameters.get('focus_area', 'Product Strategy')} aspects
-    - Test both strategic thinking and practical implementation
-    - Require analysis and justification in answers
-    - Cover different aspects of the case study
+    Questions should:
+    - Be challenging and provoke critical thinking.
+    - Be relevant to the role of {parameters.get('role')} and the industry of {parameters.get('industry')}.
+    - Test decision-making capabilities and practical application.
+    - Include justification for each answer.
+    - Cover various aspects of the case study.
 
-    Format each Q&A pair as:
-    {{
-        "question": "Detailed question here?",
-        "answer": "Comprehensive answer with analysis and justification"
-    }}
-
-    Provide exactly 5 Q&A pairs in a valid JSON array.
+    Note: Ensure the questions are appropriate for completion within {parameters.get('time_constraint')}.
+    
+    Please format as a JSON array of Q&A pairs.
     """
 
     payload = {
@@ -154,23 +134,23 @@ async def generate_qa(case_study: str, parameters: dict) -> list:
                     content = await response.json()
                     qa_text = content['candidates'][0]['content']['parts'][0]['text']
                     logger.info(f"Raw Q&A response: {qa_text}")
-                    try:
-                        # Try to find JSON array in the response
+                    try :
                         json_match = re.search(r'\[.*\]', qa_text.replace('\n', ''), re.DOTALL)
                         if json_match:
                             qa_text = json_match.group()
                         qa_list = json.loads(qa_text)
                         logger.info(f"Successfully generated {len(qa_list)} Q&A pairs")
                         return qa_list
-                    except json.JSONDecodeError as e:
+                    except json.JSONDecodeError as e :
                         logger.error(f"Error parsing Q&A JSON response: {str(e)}")
-                        logger.info("Falling back to manual Q&A extraction")
                         return extract_qa_pairs(qa_text)
+                    
                 else:
                     response_text = await response.text()
                     logger.error(f"Gemini API Q&A error: {response_text}")
                     raise Exception(f"Failed to generate Q&A: {response_text}")
+                
     except Exception as e:
         logger.error(f"Error in generate_qa: {str(e)}")
         raise
-
+    
