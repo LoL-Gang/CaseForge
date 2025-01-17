@@ -48,9 +48,9 @@ const Layout: React.FC = () => {
           <li>
             <StyledLink to="/archive">Go to Archive</StyledLink>
           </li>
-          <li>
+          {/* <li>
             <StyledLink to="/case-study">Go to Case Study</StyledLink>
-          </li>
+          </li> */}
           {/* Add more navigation links as needed */}
         </ul>
       </SidebarContainer>
