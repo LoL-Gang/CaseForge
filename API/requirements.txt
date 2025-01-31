@@ -3,7 +3,7 @@ aiohttp
 flask-cors
 firebase-admin
 requests
-spacy
+# spacy
 chromadb
 numpy
 python-dotenv
