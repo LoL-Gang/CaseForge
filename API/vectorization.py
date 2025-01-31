@@ -1,27 +1,25 @@
 # vectorization.py
 
-import spacy
 import chromadb
 import numpy as np
 import os
 import logging
+from sentence_transformers import SentenceTransformer
 
 from chromadb import Client 
 from chromadb.config import Settings
-from chromadb.errors import NotFoundError,InvalidCollectionException
+from chromadb.errors import NotFoundError, InvalidCollectionException
 
 logger = logging.getLogger(__name__)
 
-# Initialize spaCy model
+# Initialize SentenceTransformer model
 try:
-    logger.info("Loading spaCy model...")
-    nlp = spacy.load("en_core_web_md")
-    logger.info("spaCy model loaded successfully")
-except OSError:
-    logger.warning("spaCy model not found, downloading...")
-    os.system("python -m spacy download en_core_web_md")
-    nlp = spacy.load("en_core_web_md")
-    logger.info("spaCy model downloaded and loaded")
+    logger.info("Loading SentenceTransformer model...")
+    model = SentenceTransformer('all-MiniLM-L6-v2')  # You can choose other models as well
+    logger.info("SentenceTransformer model loaded successfully")
+except Exception as e:
+    logger.error(f"Error loading SentenceTransformer model: {str(e)}")
+    raise
 
 # Initialize ChromaDB client and collection
 client = None
@@ -35,20 +33,11 @@ def initialize_chromadb():
         chroma_path = "./chroma_db"
         client = chromadb.PersistentClient(path=chroma_path)
 
-        
         # Create directory if it doesn't exist
         if not os.path.exists(chroma_path):
             os.makedirs(chroma_path)
             logger.info(f"Created ChromaDB directory at {chroma_path}")
 
-        # # Initialize ChromaDB Settings
-        # settings = Settings(
-        #     chroma_db_impl="duckdb+parquet",  # Specify the database implementation
-        #     persist_directory=chroma_path      # Directory to persist the database
-        # )
-
-        # # Initialize ChromaDB Client with Settings
-        # client = Client(settings=settings)
         client.heartbeat() 
         try:
             collection = client.get_collection("case_study_vectors")
@@ -63,12 +52,12 @@ def initialize_chromadb():
         raise
 
 def vectorize_text(text: str) -> np.ndarray:
-    """Convert text to vector representation using spaCy."""
+    """Convert text to vector representation using SentenceTransformer."""
     logger.info(f"Vectorizing text of length: {len(text)}")
     try:
-        doc = nlp(text)
+        vector = model.encode(text)
         logger.info("Text vectorized successfully")
-        return doc.vector
+        return vector
     except Exception as e:
         logger.error(f"Error vectorizing text: {str(e)}")
         raise
